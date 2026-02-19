@@ -5,16 +5,19 @@ import { MaterialSymbolsLightAdd2 } from './icons/MaterialSymbolsLightAdd2';
 
 interface ImageUploaderProps {
   previewUrls: string[];
+  errorMessage: string | undefined;
   handleRemoveImage: (index: number) => void;
   handleOnAddImage: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const ImageUploader = ({
   previewUrls,
+  errorMessage,
   handleRemoveImage,
   handleOnAddImage,
 }: ImageUploaderProps) => {
   return (
+
     <div className="w-full border-2 border-dashed border-lime-400 rounded-xl p-6 bg-white">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {previewUrls.map((url, index) => (
@@ -53,6 +56,9 @@ const ImageUploader = ({
         />
       </div>
       <p className="mt-2 text-sm text-gray-600">最大4枚まで追加できます</p>
+      {errorMessage && (
+        <span className="text-sm text-red-500 font-medium">※{errorMessage}</span>
+      )}
     </div>
   );
 };

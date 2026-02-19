@@ -30,7 +30,7 @@ class ReviewRequest extends FormRequest
             'publicTransportation' => 'required|integer|in:0,1,2,3,4,5',
             'livability' =>'required|integer|in:0,1,2,3,4,5',
             'averageRating' => 'required|numeric',
-            'photos.*' => 'file|mimes:jpeg,png,jpg,gif|max:2048',
+            'photos.*' => 'file|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'goodComment' => 'nullable|max:300',
             'badComment' => 'nullable|max:300',
             'deletePhotos' => 'nullable'
@@ -49,8 +49,8 @@ class ReviewRequest extends FormRequest
             'livability.required' => '評価は必須です。',
             'livability.in' => '評価は0から5段階まででお願いします。',
             'photos.*.file' => '各ファイルは画像ファイルである必要があります。',
-            'photos.*.mimes' => '画像の形式はjpeg、png、jpg、gifのいずれかにしてください。',
-            'photos.*.max' => '各画像のサイズは2MB以内にしてください。',
+            'photos.*.mimes' => '画像の形式はjpeg、png、jpg、gif、webpのいずれかにしてください。',
+            'photos.*.max' => '各画像のサイズは5MB以内にしてください。',
             'goodComment' =>'文字数は300文字以内でお願いします。',
             'badComment' => '文字数は300文字以内でお願いします。'
         ];
