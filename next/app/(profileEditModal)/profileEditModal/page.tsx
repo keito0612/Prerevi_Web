@@ -65,7 +65,7 @@ const ProfileEditModal: React.FC = () => {
         setPreviewUrl(profileData.image_path);
         reset({
           name: profileData.name,
-          comment: profileData.comment,
+          comment: profileData.comment ?? '',
           profileImage: profileData.image_path ? profileData.image_path : null
         });
       } else if (res.status === 401) {
@@ -97,7 +97,7 @@ const ProfileEditModal: React.FC = () => {
     const formData = new FormData();
     const url: string = `${UtilApi.API_URL}/api/profile/update`;
     formData.append('name', data.name);
-    formData.append('comment', data.comment);
+    formData.append('comment', data.comment ?? '');
     if (file !== null) {
       formData.append('profileImage', file);
     }

@@ -47,7 +47,7 @@ export default function RatingEditPost() {
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
-  const { register, getValues, handleSubmit, setValue, reset, formState: { errors } } = useForm<RatingEditPostForm>();
+  const { register, getValues, handleSubmit, setValue, reset, setError, formState: { errors } } = useForm<RatingEditPostForm>();
 
 
   const fetchData = async () => {
@@ -95,6 +95,26 @@ export default function RatingEditPost() {
       setLoading(false);
     }
   };
+
+  const validateFiles = (files: File[]): string | null => {
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+
+    // 1. 形式チェック: 許可されていない形式が「一つでも含まれているか」
+    const hasInvalidType = files.some(file => !ALLOWED_TYPES.includes(file.type));
+    if (hasInvalidType) {
+      return '画像の形式は jpeg, png, gif, webp のいずれかにしてください。';
+    }
+
+    // 2. サイズチェック: 制限を超えているものが「一つでも含まれているか」
+    const hasExceededSize = files.some(file => file.size > MAX_FILE_SIZE);
+    if (hasExceededSize) {
+      return '各画像のサイズは 5MB 以内にしてください。';
+    }
+
+    return null;
+  };
+
   const handleRatingChange = (category: string, value: number) => {
     setRatings((prev) => {
       const newRatings = { ...prev, [category]: value };
@@ -166,6 +186,14 @@ export default function RatingEditPost() {
       formData.append("deletePhotos[]", url);
     });
     setLoading(true);
+    if (files.length > 0) {
+      const validationError = validateFiles(files);
+      if (validationError) {
+        setError('photos', { message: validationError });
+        setLoading(false);
+        return;
+      }
+    }
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -248,7 +276,7 @@ export default function RatingEditPost() {
               previewUrls={previewUrls}
               handleRemoveImage={handleRemoveImage}
               handleOnAddImage={handleOnAddImage}
-            />
+              errorMessage={errors.photos?.message} />
             <div className="flex justify-center mt-6 pb-24">
               <button
                 type="submit"

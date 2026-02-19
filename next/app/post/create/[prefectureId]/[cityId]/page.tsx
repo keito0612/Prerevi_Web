@@ -39,7 +39,7 @@ export default function RatingPost() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState<boolean>(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<RatingPostForm>({
+  const { register, handleSubmit, setError, formState: { errors } } = useForm<RatingPostForm>({
     defaultValues: {
       safety: 0,
       childRearing: 0,
@@ -99,6 +99,25 @@ export default function RatingPost() {
     }
   }
 
+  const validateFiles = (files: File[]): string | null => {
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    // 1. 形式チェック: 許可されていない形式が「一つでも含まれているか」
+    const hasInvalidType = files.some(file => !ALLOWED_TYPES.includes(file.type));
+    if (hasInvalidType) {
+      return '画像の形式は jpeg, png, gif, webp のいずれかにしてください。';
+    }
+
+    // 2. サイズチェック: 制限を超えているものが「一つでも含まれているか」
+    const hasExceededSize = files.some(file => file.size > MAX_FILE_SIZE);
+    if (hasExceededSize) {
+      return '各画像のサイズは 5MB 以内にしてください。';
+    }
+
+    return null;
+  };
+
   async function onSubmit(dataSet: RatingPostForm) {
     const prefectureId = params.prefectureId;
     const cityId = params.cityId;
@@ -118,6 +137,14 @@ export default function RatingPost() {
       formData.append('photos[' + index + ']', file)
     });
     setLoading(true);
+    if (files.length > 0) {
+      const validationError = validateFiles(files);
+      if (validationError) {
+        setError('photos', { message: validationError });
+        setLoading(false);
+        return;
+      }
+    }
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -165,9 +192,6 @@ export default function RatingPost() {
         <Loading2 loadingtext={"読み込み中"} />
       )}
       <div className="flex flex-col items-center p-4 pt-24  mx-auto w-full max-w-4xl bg-gray-100">
-        {/* タイトル */}
-        {/* <h2 className="text-black text-2xl md:text-3xl font-bold text-center mb-6">あなたの評価を教えてください。</h2> */}
-
         {/* 星評価 */}
         <div className='flex flex-col items-center w-full py-4  rounded-2xl bg-white mb-4'>
           <StarsRating rating={averageScore} />
@@ -202,6 +226,7 @@ export default function RatingPost() {
           </div>
           {/* 画像アップロード */}
           <ImageUploader
+            errorMessage={errors.photos?.message}
             previewUrls={previewUrls}
             handleRemoveImage={handleRemoveImage}
             handleOnAddImage={handleOnAddImage}
