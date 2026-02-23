@@ -40,7 +40,7 @@ class ReviewController extends Controller
             'user',
             'city',
             'rating',
-            'photos',
+            'photos.review.user',
             'prefecture',
             'likes'
         ])->withCount('likes')->orderBy('created_at', 'desc')->get()->map(function ($review)  {
@@ -69,7 +69,7 @@ class ReviewController extends Controller
             'user',
             'city',
             'rating',
-            'photos',
+            'photos.review.user',
             'prefecture',
             'likes'
         ])->withCount('likes')->orderBy('created_at', 'desc')->get()->map(function ($review)  {
