@@ -6,6 +6,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useState, useEffect } from "react";
 import CustomImage from "../../CustomImage";
 import MaterialSymbolsLightPersonOutlineRounded from "../../icons/MaterialSymbolsLightPersonOutlineRounded";
+import { useRouter } from 'next/navigation';
 
 interface ImageModalProps {
   isOpen: boolean;
@@ -23,10 +24,18 @@ export default function ImageModal({
   images,
 }: ImageModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(selectImageIndex ?? 0);
+  const router = useRouter();
 
   useEffect(() => {
     setSelectedImageIndex(selectImageIndex ?? 0);
   }, [selectImageIndex]);
+
+  const onUserClick = (userId: number | undefined) => {
+    if (userId !== undefined) {
+      router.push(`profile/detail/${userId}`);
+    }
+    console.log(userId);
+  }
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-[100]">
@@ -47,7 +56,7 @@ export default function ImageModal({
                   className="flex-shrink-0 w-full h-full snap-center flex flex-col bg-black relative"
                 >
                   <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
-                    <div className="flex items-center space-x-2 text-white">
+                    <div className="flex items-center space-x-2 text-white" onClick={() => onUserClick(img.review?.user?.id)}>
                       {img.review?.user?.image_path == null ? (
                         <MaterialSymbolsLightPersonOutlineRounded
                           width={40}
@@ -123,7 +132,7 @@ export default function ImageModal({
                 {/* ここに写真にあるヘッダーオーバーレイを追加 */}
                 {images[selectedImageIndex] && (
                   <div className="top-0 left-0 right-0 z-10 flex items-center justify-between p-2 bg-gradient-to-b from-black/80 to-transparent">
-                    <div className="flex items-center space-x-2 text-white">
+                    <div className="flex items-center space-x-2 text-white" onClick={() => onUserClick(images[selectedImageIndex].review?.user?.id)}>
                       {images[selectedImageIndex].review?.user?.image_path == null ? (
                         <div className="w-8 h-8 rounded-full overflow-hidden">
                           <MaterialSymbolsLightPersonOutlineRounded
