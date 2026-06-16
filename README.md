@@ -94,11 +94,11 @@
 
 ### ER図
 
-![ER図](doc/er-diagram.png)
+![ER図](doc/imagas/ER.png)
 
 ### インフラ構成図
 
-![インフラ構成図](doc/infrastructure-diagram.png)
+![インフラ構成図](doc/imagas/infrastructure.png)
 
 ## 環境構築手順
 
