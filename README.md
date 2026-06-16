@@ -90,7 +90,15 @@
 | Firebase Cloud Messaging | プッシュ通知 |
 | Google Cloud Run | 本番デプロイ |
 
+## アーキテクチャ
 
+### ER図
+
+![ER図](doc/er-diagram.png)
+
+### インフラ構成図
+
+![インフラ構成図](doc/infrastructure-diagram.png)
 
 ## 環境構築手順
 
