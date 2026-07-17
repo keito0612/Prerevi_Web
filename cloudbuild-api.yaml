@@ -4,13 +4,9 @@
 # Deploy command:
 # gcloud builds submit --config cloudbuild-api.yaml
 #
-# After deployment, set environment variables in Cloud Run console or via:
-# gcloud run services update prerebi-api --region asia-northeast1 \
-#   --set-env-vars "APP_KEY=base64:xxx,DB_HOST=db.xxx.supabase.co,..."
-#
 # Required environment variables:
 # - APP_KEY: Laravel application key
-# - DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD: Supabase PostgreSQL
+# - DB_URL, DB_AUTH_TOKEN: Turso database credentials
 # - CLOUDFLARE_R2_*: Cloudflare R2 storage credentials
 # - RESEND_API_KEY: Resend email API key
 # - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET: Google OAuth
@@ -22,7 +18,7 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/prerebi-api:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/prerebi-api:$BUILD_ID'
       - '-t'
       - 'gcr.io/$PROJECT_ID/prerebi-api:latest'
       - '-f'
@@ -33,7 +29,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/prerebi-api:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/prerebi-api:$BUILD_ID'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -48,7 +44,7 @@ steps:
       - 'deploy'
       - 'prerebi-api'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/prerebi-api:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/prerebi-api:$BUILD_ID'
       - '--region'
       - 'asia-northeast1'
       - '--platform'
@@ -65,12 +61,12 @@ steps:
       - '--port'
       - '8080'
       - '--set-env-vars'
-      - 'APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr,DB_CONNECTION=pgsql,FILESYSTEM_DISK=r2,MAIL_MAILER=resend,TRUSTED_PROXIES=*'
+      - 'APP_ENV=production,APP_DEBUG=false,LOG_CHANNEL=stderr,DB_CONNECTION=libsql,FILESYSTEM_DISK=r2,MAIL_MAILER=resend,TRUSTED_PROXIES=*'
       - '--set-secrets'
       - '/secrets/.env=prerebi_env:latest'
 
 images:
-  - 'gcr.io/$PROJECT_ID/prerebi-api:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/prerebi-api:$BUILD_ID'
   - 'gcr.io/$PROJECT_ID/prerebi-api:latest'
 
 options:

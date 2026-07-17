@@ -1,18 +1,20 @@
 # ===========================================
 # Laravel API Production Dockerfile for Cloud Run
 # ===========================================
-FROM php:8.3-fpm-alpine AS base
+FROM php:8.3-fpm AS base
 
 # Install dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
     git \
     zip \
     unzip \
     libpq-dev \
-    icu-dev \
-    && docker-php-ext-install pdo_mysql pdo_pgsql pgsql bcmath intl opcache
+    libicu-dev \
+    curl \
+    && docker-php-ext-install pdo_mysql pdo_pgsql pgsql bcmath intl opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy PHP configuration
 COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
@@ -40,6 +42,13 @@ COPY ./src .
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize --no-dev
 
+# Install libsql PHP extension for Turso
+RUN php artisan turso-php:install \
+    && EXT_DIR=$(php -n -r "echo ini_get('extension_dir');") \
+    && ls -la ~/.config/turso-client-php/8.3/ \
+    && cp ~/.config/turso-client-php/8.3/*.so ${EXT_DIR}/libsql_php.so \
+    && echo "extension=libsql_php.so" > /usr/local/etc/php/conf.d/libsql.ini
+
 # ===========================================
 # Production stage
 # ===========================================
@@ -50,6 +59,10 @@ WORKDIR /var/www/html
 
 # Copy application from build stage
 COPY --from=build /var/www/html /var/www/html
+
+# Copy libsql extension from build stage
+COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=build /usr/local/etc/php/conf.d/libsql.ini /usr/local/etc/php/conf.d/libsql.ini
 
 RUN rm -rf /etc/nginx/conf.d/*
 # Copy nginx configuration

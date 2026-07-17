@@ -17,13 +17,22 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         Schema::disableForeignKeyConstraints();
-        $this->call([
-            PrefecturesSeeder::class,
-            CitySeeder::class,
-            // UserSeeder::class,
-            // ReviewSeeder::class,
-            // RatingSeeder::class
-        ]);
+        if(!(app()->isProduction())){
+            $seeders = [
+                PrefecturesSeeder::class,
+                CitySeeder::class,
+                UserSeeder::class,
+                ReviewSeeder::class,
+                RatingSeeder::class
+            ];
+        }else{
+            $seeders = [
+                PrefecturesSeeder::class,
+                CitySeeder::class,
+            ];
+        }
+
+        $this->call($seeders);
         Schema::enableForeignKeyConstraints();
     }
 }

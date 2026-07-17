@@ -1,13 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Cloudflare Workers用（@opennextjs/cloudflareを使用）
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Turbopack設定（Next.js 16ではデフォルトで有効）
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+  // Webpack設定（フォールバック用）
   webpack: (config) => {
     let modularizeImports = null;
     config.module.rules.some((rule: { oneOf: any[]; }) =>
@@ -23,7 +30,7 @@ const nextConfig: NextConfig = {
         {
           loader: "@svgr/webpack",
           options: {
-            svgo: false, // 圧縮無効
+            svgo: false,
           },
         },
       ],
@@ -62,3 +69,8 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// OpenNext Cloudflare開発環境用の初期化
+if (process.env.NODE_ENV === 'development') {
+  import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+}

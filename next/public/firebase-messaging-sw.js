@@ -1,20 +1,15 @@
-import { NextResponse } from 'next/server';
-
-export async function GET() {
-  const firebaseConfig = {
-    apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").replace(/,$/, "").trim(),
-    authDomain: (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "").trim(),
-    projectId: (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "").trim(),
-    storageBucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim(),
-    messagingSenderId: (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "").trim(),
-    appId: (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "").trim(),
-  };
-
-  const swContent = `
+// Auto-generated Firebase Service Worker
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-firebase.initializeApp(${JSON.stringify(firebaseConfig)});
+firebase.initializeApp({
+  "apiKey": "",
+  "authDomain": "",
+  "projectId": "",
+  "storageBucket": "",
+  "messagingSenderId": "",
+  "appId": ""
+});
 
 const messaging = firebase.messaging();
 
@@ -47,12 +42,3 @@ self.addEventListener('notificationclick', (event) => {
         })
     );
 });
-`;
-
-  return new NextResponse(swContent, {
-    headers: {
-      'Content-Type': 'application/javascript',
-      'Service-Worker-Allowed': '/',
-    },
-  });
-}
