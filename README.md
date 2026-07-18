@@ -58,7 +58,53 @@
 | **その他** | | 
 | チュートリアル | 初回利用時のガイド表示 | 
 | 利用規約 | 利用規約ページ | 
-| プライバシーポリシー | プライバシーポリシーページ | 
+| プライバシーポリシー | プライバシーポリシーページ |
+
+## 画面一覧
+
+### ホーム画面
+トップページ。都道府県を選択してレビューを閲覧できます。
+
+![ホーム画面](doc/images/screens/home.png)
+
+### 評価モーダル
+選択した都道府県の情報を表示するモーダル。
+![市一覧画面](doc/images/screens/modal.png)
+
+### レビュー一覧画面
+市区町村のレビュー一覧を表示。評価の平均値も確認できます。
+
+![レビュー一覧画面](doc/images/screens/reviews.png)
+
+### レビュー投稿画面
+新規レビューを投稿する画面。写真のアップロードも可能。
+
+![レビュー投稿画面](doc/images/screens/review-post.png)
+
+### ログイン画面
+メールアドレスまたはGoogleアカウントでログイン。
+
+![ログイン画面](doc/images/screens/login.png)
+
+### 新規登録画面
+メールアドレスでアカウントを作成。
+
+![新規登録画面](doc/images/screens/register.png)
+
+### プロフィール画面
+ユーザー情報と投稿したレビュー一覧を表示。
+
+![プロフィール画面](doc/images/screens/profile.png)
+
+### プロフィール編集画面
+ニックネームやアイコン画像を変更。
+
+![プロフィール編集画面](doc/images/screens/profile-edit.png)
+
+### チュートリアル画面
+初回利用時のガイド表示。
+
+![チュートリアル画面](doc/images/screens/tutorial.png)
 
 ## 使用技術
 
@@ -83,12 +129,13 @@
 |-----|------|
 | Docker | コンテナ化 |
 | Nginx | リバースプロキシ |
-| MySQL 8.0 | 開発用データベース |
-| Supabase (PostgreSQL) | 本番データベース |
+| SQLite | 開発用データベース |
+| Turso (libSQL) | 本番データベース |
+| Cloudflare Workers | フロントエンドホスティング |
 | Cloudflare R2 | 画像ストレージ |
+| Google Cloud Run | APIホスティング |
 | Resend | メール送信 |
 | Firebase Cloud Messaging | プッシュ通知 |
-| Google Cloud Run | 本番デプロイ |
 
 ## アーキテクチャ
 
@@ -172,7 +219,6 @@ php artisan db:seed
 |---------|-----|
 | フロントエンド | http://localhost |
 | API | http://localhost/api |
-| phpMyAdmin | http://localhost:10000 |
 | Mailhog | http://localhost:8025 |
 
 ## 開発コマンド

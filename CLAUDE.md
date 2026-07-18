@@ -111,10 +111,11 @@ php artisan test
 
 | 設定項目 | 開発環境 | 本番環境 |
 |---------|---------|---------|
-| Database | MySQL (docker) | Supabase PostgreSQL |
+| Database | SQLite (ローカル) | Turso (libSQL) |
 | Storage | public (ローカル) | Cloudflare R2 |
 | Mail | Mailhog | Resend |
-| Docker | override.yml | prod.yml |
+| Frontend | Docker (localhost) | Cloudflare Workers |
+| API | Docker (localhost) | Google Cloud Run |
 
 ### 環境変数ファイル構成
 ```
@@ -135,11 +136,9 @@ next/
 ### Docker サービス構成
 
 **開発環境 (docker-compose.dev.yml)**
-- api: PHP/Laravel (port 8000) + ホットリロード
+- api: PHP/Laravel (port 8000) + ホットリロード + SQLite
 - next: Next.js (port 3000) + ホットリロード
 - web: Nginx reverse proxy (port 80)
-- mysql: MySQL 8.0 (port 2000)
-- phpmyadmin: DB管理 (port 10000)
 - mailhog: メールテスト (port 8025)
 
 **本番環境 (docker-compose.prod.yml)**
@@ -165,7 +164,9 @@ gcloud builds submit --config cloudbuild-next.yaml \
 - `docker/nginx/Dockerfile.prod` - Nginx (ローカルテスト用)
 
 ### 外部サービス (本番)
-- **Database**: Supabase PostgreSQL
+- **Database**: Turso (libSQL)
+- **Frontend**: Cloudflare Workers
+- **API**: Google Cloud Run
 - **Storage**: Cloudflare R2
 - **Email**: Resend
 - **Auth**: Google OAuth
