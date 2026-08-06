@@ -3,13 +3,13 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  "apiKey": "AIzaSyASlo0Yff6vnNdaAYkuE9Ht2DJnVBJjWEA",
-  "authDomain": "prerebi-app.firebaseapp.com",
-  "projectId": "prerebi-app",
-  "storageBucket": "prerebi-app.firebasestorage.app",
-  "messagingSenderId": "655709284515",
-  "appId": "1:655709284515:web:1987883db1983b27d67716",
-  "measurementId": "G-ZHTNNDBRRF"
+    "apiKey": (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").replace(/,$/, "").trim(),
+    "authDomain": (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "").trim(),
+    "projectId": (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "").trim(),
+    "storageBucket": (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim(),
+    "messagingSenderId": (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "").trim(),
+    "appId": (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "").trim(),
+    "measurementId": (process.env.NEXT_PUBLIC_MEASUREMENT_ID || "").trim()
 });
 
 const messaging = firebase.messaging();
