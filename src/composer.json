@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "devkandil/notifire": "^1.2",
         "doctrine/dbal": "^4.2",
         "guzzlehttp/guzzle": "^7.0",
         "kreait/firebase-php": "^7.24",

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbopack",
+    "predev": "node scripts/generate-firebase-sw.js",
     "prebuild": "node scripts/generate-firebase-sw.js",
     "build:worker": "node scripts/generate-firebase-sw.js && opennextjs-cloudflare build",
     "preview": "node scripts/generate-firebase-sw.js && opennextjs-cloudflare build && opennextjs-cloudflare preview",

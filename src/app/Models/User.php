@@ -87,4 +87,12 @@ class User extends Authenticatable
         ->get()
         ->sum('likes_count');
     }
+
+    /**
+     * FCM通知のルーティング（NotiFire用）
+     */
+    public function routeNotificationForFcm(): ?string
+    {
+        return $this->fcm_token;
+    }
 }

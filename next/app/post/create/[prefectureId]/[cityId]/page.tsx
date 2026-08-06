@@ -15,6 +15,7 @@ import NavBar from "@/app/components/NavBar";
 import ImageUploader from "@/app/components/ImageUploader";
 import RatingSection from "@/app/components/RatingSection";
 import NavigationBottomBar from "@/app/components/NavigationBottomBar";
+import TownSelector from "@/app/components/TownSelector";
 
 interface RatingPostForm {
   safety: number
@@ -26,6 +27,7 @@ interface RatingPostForm {
   goodComment: string
   badComment: string
   averageRating: number
+  townName: string
 }
 
 
@@ -39,6 +41,8 @@ export default function RatingPost() {
   const router = useRouter();
   const params = useParams();
   const [loading, setLoading] = useState<boolean>(false);
+  const [selectedTown, setSelectedTown] = useState<string>("");
+  const [townError, setTownError] = useState<string>("");
   const { register, handleSubmit, setError, formState: { errors } } = useForm<RatingPostForm>({
     defaultValues: {
       safety: 0,
@@ -50,6 +54,7 @@ export default function RatingPost() {
       goodComment: "",
       badComment: "",
       averageRating: 0,
+      townName: "",
     }
   });
   const [averageScore, setAverageScore] = useState<number>(0);
@@ -119,12 +124,20 @@ export default function RatingPost() {
   };
 
   async function onSubmit(dataSet: RatingPostForm) {
+    // Validate town selection
+    if (!selectedTown) {
+      setTownError("町を選択してください。");
+      return;
+    }
+    setTownError("");
+
     const prefectureId = params.prefectureId;
     const cityId = params.cityId;
     const url: string = `${UtilApi.API_URL}/api/post/city_review/${prefectureId}/${cityId}`;
     const formData = new FormData();
     dataSet.photos = files;
     dataSet.averageRating = averageScore;
+    dataSet.townName = selectedTown;
     formData.append('safety', dataSet.safety.toString());
     formData.append('childRearing', dataSet.childRearing.toString());
     formData.append('cityPolicies', dataSet.cityPolicies.toString());
@@ -133,6 +146,7 @@ export default function RatingPost() {
     formData.append("goodComment", dataSet.goodComment.toString());
     formData.append("badComment", dataSet.badComment.toString());
     formData.append("averageRating", dataSet.averageRating.toString());
+    formData.append("townName", dataSet.townName);
     files.forEach((file, index) => {
       formData.append('photos[' + index + ']', file)
     });
@@ -162,7 +176,7 @@ export default function RatingPost() {
         setModalTitle('レビューが投稿されました。');
         setModalMessage('');
       } else {
-        const message = UtilApi.selectedErrorMessage(["safety", "childRearing", "cityPolicies", "publicTransportation", "livability", "goodComment", "badComment", "average_rating"], data["errors"])
+        const message = UtilApi.selectedErrorMessage(["safety", "childRearing", "cityPolicies", "publicTransportation", "livability", "goodComment", "badComment", "average_rating", "townName"], data["errors"])
         setIsModalOpen(true);
         setModalType('Error');
         setModalTitle('エラーが発生しました。');
@@ -202,6 +216,14 @@ export default function RatingPost() {
           <Chart title="評価" data={chartData} />
         </div>
         <form className="w-full" onSubmit={handleSubmit(onSubmit)} method="POST">
+          {/* 町選択 */}
+          <TownSelector
+            cityId={params.cityId as string}
+            selectedTown={selectedTown}
+            onSelect={setSelectedTown}
+            error={townError}
+            onError={setTownError}
+          />
           {/* セレクトボタン */}
           <div className='w-full p-2 pb-2 my-4 bg-white rounded-2xl'>
             <RatingSection

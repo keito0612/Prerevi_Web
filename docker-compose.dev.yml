@@ -24,7 +24,7 @@ services:
       - APP_DEBUG=true
 
   next:
-    env_file: ./next/.env.local
+    env_file: ./next/.env
     build:
       context: .
       dockerfile: ./docker/next/Dockerfile

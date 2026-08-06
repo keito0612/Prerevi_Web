@@ -11,8 +11,7 @@ export default function ReviewLocation({
 
   return (
     <div className="flex items-center justify-start font-bold text-black">
-      <p className="mr-2">{review.prefecture.name}</p>
-      <p>{review.city.name}</p>
+      <p>{review.prefecture.name}{review.city.name}{review.town_name ?? ''}</p>
     </div>
   );
 }

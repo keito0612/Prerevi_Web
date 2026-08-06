@@ -8,14 +8,32 @@
 const fs = require('fs');
 const path = require('path');
 
+// .env ファイルを読み込む
+const envPath = path.join(__dirname, '..', '.env');
+if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    envContent.split('\n').forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine && !trimmedLine.startsWith('#')) {
+            const eqIndex = trimmedLine.indexOf('=');
+            if (eqIndex > 0) {
+                const key = trimmedLine.substring(0, eqIndex).trim();
+                const value = trimmedLine.substring(eqIndex + 1).trim();
+                process.env[key] = value;
+            }
+        }
+    });
+}
+
 // 環境変数から設定を取得
 const firebaseConfig = {
-  apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").replace(/,$/, "").trim(),
-  authDomain: (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "").trim(),
-  projectId: (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "").trim(),
-  storageBucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim(),
-  messagingSenderId: (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "").trim(),
-  appId: (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "").trim(),
+    apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").replace(/,$/, "").trim(),
+    authDomain: (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "").trim(),
+    projectId: (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "").trim(),
+    storageBucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "").trim(),
+    messagingSenderId: (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "").trim(),
+    appId: (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "").trim(),
+    measurementId: (process.env.NEXT_PUBLIC_MEASUREMENT_ID || "").trim(),
 };
 
 const swContent = `// Auto-generated Firebase Service Worker
@@ -63,7 +81,7 @@ const outputPath = path.join(publicDir, 'firebase-messaging-sw.js');
 
 // publicディレクトリが存在しない場合は作成
 if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir, { recursive: true });
+    fs.mkdirSync(publicDir, { recursive: true });
 }
 
 fs.writeFileSync(outputPath, swContent);

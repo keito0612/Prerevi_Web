@@ -38,6 +38,7 @@ Route::prefix('/auth/google')->group(function () {
     Route::get('/url', [GoogleAuthController::class, 'getGoogleAuthUrl']);
 });
 Route::get('/{prefecture_id}/citys/', [CityController::class, 'getCitys']);
+Route::get('/city/{city_id}/towns/', [CityController::class, 'getTowns']);
 Route::get('/prefecture_reviews/{prefecture_id}',[ReviewController::class, 'getPrefectureReviews']);
 Route::get('/city_reviews/{prefecture_id}/{city_id}',[ReviewController::class, 'getCityReviews']);
 Route::post('/password/email', [AuthController::class, 'sendPasswordResetEmail']);

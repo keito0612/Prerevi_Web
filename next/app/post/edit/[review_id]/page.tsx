@@ -16,6 +16,7 @@ import NavBar from "@/app/components/NavBar";
 import ImageUploader from "@/app/components/ImageUploader";
 import RatingSection from "@/app/components/RatingSection";
 import NavigationBottomBar from '@/app/components/NavigationBottomBar';
+import TownSelector from '@/app/components/TownSelector';
 
 interface RatingEditPostForm {
   safety: number;
@@ -27,6 +28,7 @@ interface RatingEditPostForm {
   goodComment: string;
   badComment: string;
   averageRating: number;
+  townName: string;
 }
 
 const categoriesTitle = ["治安", "子育て", "制度", "交通機関", "住みやすさ"];
@@ -47,6 +49,9 @@ export default function RatingEditPost() {
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
+  const [selectedTown, setSelectedTown] = useState<string>("");
+  const [townError, setTownError] = useState<string>("");
+  const [cityId, setCityId] = useState<number | null>(null);
   const { register, getValues, handleSubmit, setValue, reset, setError, formState: { errors } } = useForm<RatingEditPostForm>();
 
 
@@ -71,8 +76,15 @@ export default function RatingEditPost() {
         livability: review.rating.livability,
         goodComment: review.good_comment,
         badComment: review.bad_comment,
-        averageRating: review.rating.average_rating
+        averageRating: review.rating.average_rating,
+        townName: review.town_name ?? ""
       })
+
+      // Set initial town and cityId
+      if (review.town_name) {
+        setSelectedTown(review.town_name);
+      }
+      setCityId(review.city_id);
 
       setRatings(
         Object.fromEntries(
@@ -93,6 +105,7 @@ export default function RatingEditPost() {
     } catch (err) {
       console.error("Fetch failed:", err);
       setLoading(false);
+      setTownsLoading(false);
     }
   };
 
@@ -165,11 +178,19 @@ export default function RatingEditPost() {
   }, []);
 
   async function onSubmit(dataSet: RatingEditPostForm) {
+    // Validate town selection
+    if (!selectedTown) {
+      setTownError("町を選択してください。");
+      return;
+    }
+    setTownError("");
+
     const formData = new FormData();
     const reviewId = params.review_id;
     const url = `${UtilApi.API_URL}/api/post/review/${reviewId}/update`;
     dataSet.photos = files;
     dataSet.averageRating = averageScore;
+    dataSet.townName = selectedTown;
 
     formData.append('safety', dataSet.safety.toString());
     formData.append('childRearing', dataSet.childRearing.toString());
@@ -179,6 +200,7 @@ export default function RatingEditPost() {
     formData.append("goodComment", dataSet.goodComment.toString());
     formData.append("badComment", dataSet.badComment.toString());
     formData.append("averageRating", dataSet.averageRating.toString());
+    formData.append("townName", dataSet.townName);
     dataSet.photos.forEach((file) => {
       formData.append("photos[]", file);
     });
@@ -210,7 +232,7 @@ export default function RatingEditPost() {
         setModalType("Success");
         setModalTitle("レビューが更新されました。");
       } else {
-        const message = UtilApi.selectedErrorMessage([...categories, "goodComment", "badComment"], data.errors);
+        const message = UtilApi.selectedErrorMessage([...categories, "goodComment", "badComment", "townName"], data.errors);
         setIsModalOpen(true);
         setModalType("Error");
         setModalTitle("エラーが発生しました。");
@@ -246,6 +268,16 @@ export default function RatingEditPost() {
             <Chart title="評価" data={chartData} />
           </div>
           <form className="w-full" onSubmit={handleSubmit(onSubmit)} method="POST">
+            {/* 町選択 */}
+            {cityId && (
+              <TownSelector
+                cityId={cityId}
+                selectedTown={selectedTown}
+                onSelect={setSelectedTown}
+                error={townError}
+                onError={setTownError}
+              />
+            )}
             <div className='w-full p-2 pb-2 my-4 bg-white rounded-2xl'>
               <RatingSection
                 categories={categories as Path<RatingEditPostForm>[]}

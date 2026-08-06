@@ -1,8 +1,12 @@
-FROM node:23-alpine
+FROM node:23-slim
 
 WORKDIR /app
 
-# nextアプリが用意できた後、戻す
+# Workerd用の依存パッケージをインストール
+RUN apt-get update && apt-get install -y \
+    libc++1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # package.jsonとpackage-lock.jsonをコピー
 COPY ./next/package*.json ./
 

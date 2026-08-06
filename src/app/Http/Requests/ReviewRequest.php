@@ -33,7 +33,8 @@ class ReviewRequest extends FormRequest
             'photos.*' => 'file|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'goodComment' => 'nullable|max:300',
             'badComment' => 'nullable|max:300',
-            'deletePhotos' => 'nullable'
+            'deletePhotos' => 'nullable',
+            'townName' => 'required|string|max:100'
         ];
     }
 
@@ -52,7 +53,9 @@ class ReviewRequest extends FormRequest
             'photos.*.mimes' => '画像の形式はjpeg、png、jpg、gif、webpのいずれかにしてください。',
             'photos.*.max' => '各画像のサイズは5MB以内にしてください。',
             'goodComment' =>'文字数は300文字以内でお願いします。',
-            'badComment' => '文字数は300文字以内でお願いします。'
+            'badComment' => '文字数は300文字以内でお願いします。',
+            'townName.required' => '町を選択してください。',
+            'townName.max' => '町名は100文字以内でお願いします。'
         ];
     }
 

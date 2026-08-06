@@ -13,6 +13,7 @@ class Review extends Model
         'user_id',
         'prefecture_id',
         'city_id',
+        'town_name',
         'good_comment',
         'bad_comment'
     ];

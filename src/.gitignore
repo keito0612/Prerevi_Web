@@ -7,7 +7,8 @@
 /storage/pail
 /vendor
 .env
-*-firebase-adminsdk-*.json
+*-firebase-admin.json
+/storage/firebase.json
 .env.backup
 .env.production
 .phpactor.json

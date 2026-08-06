@@ -103,6 +103,7 @@ class ReviewController extends Controller
                     "user_id" => $user_id,
                     "prefecture_id" => $prefecture_id,
                     "city_id" => $city_id,
+                    "town_name" => $request->townName,
                     "good_comment" => $request->goodComment,
                     "bad_comment" => $request->badComment,
                 ]
@@ -166,6 +167,7 @@ class ReviewController extends Controller
         DB::beginTransaction();
         try{
             $review->update([
+                'town_name' => $request->townName,
                 'good_comment' => $request->goodComment,
                 'bad_comment' => $request->badComment
             ]);
@@ -306,7 +308,6 @@ class ReviewController extends Controller
             ];
             $notification = new InformationNotification($payload);
             $postedBy->notify($notification);
-            $notification->sendFcmNotification($postedBy);
             DB::commit();
             return response()->json([
                 "message" => "You Liked the review",
@@ -323,6 +324,13 @@ class ReviewController extends Controller
         try{
             $userId = Auth::id();
             $like = Like::where('review_id', $reviewId)->where('user_id', $userId)->first();
+
+            if (!$like) {
+                return response()->json([
+                    "message" => "Like not found",
+                ], 404);
+            }
+
             $like->delete();
 
             return response()->json([

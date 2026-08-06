@@ -2,10 +2,12 @@
 
 namespace App\Notifications;
 
-use App\Services\FcmService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use DevKandil\NotiFire\Channels\FcmChannel;
+use DevKandil\NotiFire\Enums\MessagePriority;
+use DevKandil\NotiFire\FcmMessage;
 
 class InformationNotification extends Notification
 {
@@ -29,24 +31,33 @@ class InformationNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        // いいね通知の場合はメールを送らない（プッシュ通知とデータベース保存のみ）
+        // いいね通知の場合はFCMとデータベース保存
         if (($this->payload['type'] ?? null) === \App\Consts\NotificationType::LIKE) {
+            // FCMトークンがある場合のみFCM通知を送信
+            if (!empty($notifiable->fcm_token)) {
+                return [FcmChannel::class, 'database'];
+            }
             return ['database'];
         }
         return ['mail', 'database'];
     }
 
     /**
-     * Send FCM push notification.
+     * FCM通知の内容を定義
      */
-    public function sendFcmNotification(object $notifiable): void
+    public function toFcm(object $notifiable): FcmMessage
     {
-        if (empty($notifiable->fcm_token)) {
-            return;
-        }
-
-        $fcmService = app(FcmService::class);
-        $fcmService->sendNotification($notifiable->fcm_token, $this->payload);
+        return FcmMessage::create(
+            $this->payload['title'] ?? 'お知らせ',
+            $this->payload['content'] ?? ''
+        )
+            ->sound('default')
+            ->priority(MessagePriority::HIGH)
+            ->data([
+                'type' => $this->payload['type'] ?? '',
+                'url' => $this->payload['url'] ?? '',
+                'liked_by_user_id' => isset($this->payload['liked_by_user']) ? (string) $this->payload['liked_by_user']->id : '',
+            ]);
     }
 
     public function toMail(object $notifiable): MailMessage

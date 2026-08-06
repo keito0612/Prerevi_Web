@@ -79,6 +79,7 @@ export interface Review {
   user_id: number;
   city_id: number;
   prefecture_id: number;
+  town_name: string | null;
   good_comment: string;
   bad_comment: string;
   created_at: string;
