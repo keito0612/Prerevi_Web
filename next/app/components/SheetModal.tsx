@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { Close } from "@mui/icons-material";
-import { MaterialSymbolsArrowBackIosRounded } from "./icons/MaterialSymbolsArrowBackIosRounded";
+import React, { useState, useEffect, useCallback } from "react";
+import { BsX, BsChevronLeft } from "react-icons/bs";
 
 interface SheetModalProps {
   title: string;
@@ -12,83 +11,204 @@ interface SheetModalProps {
   headerContent?: React.ReactNode;
 }
 
-const SheetModal: React.FC<SheetModalProps> = ({ title, isOpen, onClose, children, showBackButton = true, backButtonOnClick, headerContent }) => {
-  const [isExpanded, setIsExpanded] = useState(false); // モーダルの拡張状態を管理
-  const [startY, setStartY] = useState<number | null>(null); // ドラッグの開始位置を管理
+const SheetModal: React.FC<SheetModalProps> = ({
+  title,
+  isOpen,
+  onClose,
+  children,
+  showBackButton = false,
+  backButtonOnClick,
+  headerContent
+}) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [startY, setStartY] = useState<number | null>(null);
 
-  const handleMouseDown = (event: React.MouseEvent) => {
-    setStartY(event.clientY); // マウスの開始位置を記録
-  };
-
-  const handleMouseMove = (event: MouseEvent) => {
-    if (startY !== null) {
-      const distance = startY - event.clientY; // ドラッグの移動距離を計算
-      if (distance > 100) {
-        // 100px以上移動したら拡張
-        setIsExpanded(true);
-        document.removeEventListener("mousemove", handleMouseMove); // イベントを解除
-      }
+  // アニメーション用の遅延表示
+  useEffect(() => {
+    if (isOpen) {
+      // 少し遅延させてからアニメーション開始
+      const timer = setTimeout(() => setIsVisible(true), 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      setDragOffset(0);
     }
-  };
+  }, [isOpen]);
 
-  const handleMouseUp = () => {
+  // ドラッグ開始
+  const handleDragStart = useCallback((clientY: number) => {
+    setStartY(clientY);
+    setIsDragging(true);
+  }, []);
+
+  // ドラッグ中
+  const handleDragMove = useCallback((clientY: number) => {
+    if (startY !== null && isDragging) {
+      const offset = Math.max(0, clientY - startY);
+      setDragOffset(offset);
+    }
+  }, [startY, isDragging]);
+
+  // ドラッグ終了
+  const handleDragEnd = useCallback(() => {
+    if (dragOffset > 150) {
+      onClose();
+    }
+    setDragOffset(0);
+    setIsDragging(false);
     setStartY(null);
-    document.removeEventListener("mousemove", handleMouseMove);
+  }, [dragOffset, onClose]);
+
+  // マウスイベント
+  const handleMouseDown = (e: React.MouseEvent) => {
+    handleDragStart(e.clientY);
   };
 
-  const handleMouseDownWrapper = (event: React.MouseEvent) => {
-    handleMouseDown(event);
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp, { once: true });
+  // タッチイベント
+  const handleTouchStart = (e: React.TouchEvent) => {
+    handleDragStart(e.touches[0].clientY);
   };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    handleDragMove(e.touches[0].clientY);
+  };
+
+  // グローバルイベントリスナー
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        handleDragMove(e.clientY);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        handleDragEnd();
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  // ESCキーで閉じる
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [isOpen, onClose]);
+
+  if (!isOpen && !isVisible) return null;
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay with blur */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+        className={`fixed inset-0 z-40 transition-all duration-300 ease-out
+          ${isVisible ? "bg-black/40 backdrop-blur-sm" : "bg-transparent backdrop-blur-none"}
+        `}
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Modal */}
+      {/* Modal Container */}
       <div
-        className={`fixed bg-white rounded-t-2xl shadow-lg transform transition-transform duration-300
-        w-full md:w-[750px]  max-h-screen overflow-y-auto
-        ${isOpen ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-x-full"}
-        ${isExpanded
-            ? "h-[90%] sm:h-[90%]"
-            : "h-[90%] sm:h-[90%]"
-          }
-        md:h-[85%] top-20 lg:top-24 md:bottom-auto md:right-4 sm:bottom-0`}
-        onMouseDown={handleMouseDownWrapper}
+        className={`fixed z-50 bg-white shadow-2xl overflow-hidden
+          transition-all ease-out
+          ${isDragging ? "duration-0" : "duration-300"}
+
+          /* Mobile: Bottom Sheet */
+          inset-x-0 bottom-0 rounded-t-3xl
+          h-[90vh]
+
+          /* Desktop: Side Panel */
+          md:inset-x-auto md:bottom-auto
+          md:right-4 md:top-20 lg:top-24
+          md:w-[480px] lg:w-[560px]
+          md:h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)]
+          md:rounded-2xl
+
+          ${isVisible ? "translate-y-0 md:translate-x-0 opacity-100" : "translate-y-full md:translate-y-0 md:translate-x-full opacity-0"}
+        `}
+        style={{
+          transform: isVisible
+            ? `translateY(${dragOffset}px)`
+            : undefined,
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
       >
-        <div className="z-30 bg-white top-0 sticky">
-          <div className="p-4 border-b flex justify-between items-center relative">
+        {/* Drag Handle - Mobile Only */}
+        <div
+          className="md:hidden flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleDragEnd}
+        >
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full transition-colors hover:bg-gray-400" />
+        </div>
+
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100">
+          <div className="relative flex items-center justify-between h-14 px-4">
             {/* Back Button */}
-            {showBackButton && (
-              <button
-                className="text-gray-500 hover:text-black absolute left-4"
-                onClick={backButtonOnClick}
-                aria-label="Back"
-              >
-                <MaterialSymbolsArrowBackIosRounded className="w-6 h-6" />
-              </button>
-            )}
+            <div className="w-10">
+              {showBackButton && (
+                <button
+                  onClick={backButtonOnClick}
+                  className="flex items-center justify-center w-10 h-10 -ml-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+                  aria-label="戻る"
+                >
+                  <BsChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
             {/* Title */}
-            <h2 className="text-lg font-bold text-black text-center absolute left-1/2 transform -translate-x-1/2">{title}</h2>
+            <h2
+              id="modal-title"
+              className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900 truncate max-w-[60%]"
+            >
+              {title}
+            </h2>
+
             {/* Close Button */}
             <button
-              className="text-gray-500 hover:text-black absolute right-4"
               onClick={onClose}
-              aria-label="Close Modal"
+              className="flex items-center justify-center w-10 h-10 -mr-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-all duration-200"
+              aria-label="閉じる"
             >
-              <Close style={{ fontSize: 30, color: 'black' }} className="h-6 w-6" />
+              <BsX className="w-6 h-6" />
             </button>
           </div>
-          {headerContent}
+
+          {/* Header Content (Tabs, etc.) */}
+          {headerContent && (
+            <div className="border-t border-gray-50">
+              {headerContent}
+            </div>
+          )}
         </div>
-        <div className="">{children}</div>
+
+        {/* Content */}
+        <div className="overflow-y-auto overscroll-contain h-[calc(100%-3.5rem)]">
+          {children}
+        </div>
       </div>
     </>
   );
