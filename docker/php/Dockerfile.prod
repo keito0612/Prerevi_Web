@@ -1,7 +1,8 @@
 # ===========================================
 # Laravel API Production Dockerfile for Cloud Run
 # ===========================================
-FROM php:8.3-fpm AS base
+# PHP 8.3.36: Security fix for PHP2Shell (CVE-2026-109618, CVE-2026-109619)
+FROM php:8.3.36-fpm AS base
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \

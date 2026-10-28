@@ -1,5 +1,6 @@
 # Note: Using linux/amd64 because libsql_php extension only supports x86_64 Linux
-FROM --platform=linux/amd64 php:8.3
+# PHP 8.3.36: Security fix for PHP2Shell (CVE-2026-109618, CVE-2026-109619)
+FROM --platform=linux/amd64 php:8.3.36
 
 # ユーザーとグループのIDを指定
 # ※ Linuxの一般ユーザーのデフォルトのID
