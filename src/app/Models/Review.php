@@ -15,7 +15,13 @@ class Review extends Model
         'city_id',
         'town_name',
         'good_comment',
-        'bad_comment'
+        'bad_comment',
+        'is_anonymous',
+        'ip_hash'
+    ];
+
+    protected $casts = [
+        'is_anonymous' => 'boolean',
     ];
 
     protected $appends = ['posted_at_human'];

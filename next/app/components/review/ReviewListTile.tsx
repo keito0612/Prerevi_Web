@@ -16,7 +16,7 @@ interface ReviewListTileProps {
 export default function ReviewListTile({ review, onMenuAction, onUserClick }: ReviewListTileProps) {
   return (
     <div className="bg-white rounded-2xl shadow-card p-5 space-y-4 transition-shadow duration-200 hover:shadow-elevated">
-      <ReviewHeader user={review.user} reviewId={review.id} onMenuAction={onMenuAction} onUserClick={onUserClick} />
+      <ReviewHeader user={review.user} reviewId={review.id} isAnonymous={review.is_anonymous} onMenuAction={onMenuAction} onUserClick={onUserClick} />
       <ReviewLocation review={review} />
       <ReviewMeta review={review} />
       <ReviewBody review={review} />

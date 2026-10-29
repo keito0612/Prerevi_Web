@@ -242,11 +242,8 @@ function HomeContent() {
   }
 
   const postButtonClick = (prefectureId: number, cityId: number) => {
-    if (token) {
-      router.push(`/post/create/${prefectureId}/${cityId}`);
-    } else {
-      router.push("/unauthorized");
-    }
+    // 認証不要で投稿画面に遷移（匿名投稿対応）
+    router.push(`/post/create/${prefectureId}/${cityId}`);
   }
 
   const getCitys = async (prefectureId: number) => {

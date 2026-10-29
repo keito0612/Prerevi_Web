@@ -5,6 +5,7 @@ use App\Constants\NotificationType;
 use Carbon\Carbon;
 use App\Http\Requests\CityRequest;
 use App\Http\Requests\ReviewRequest;
+use App\Http\Requests\AnonymousReviewRequest;
 use App\Models\Like;
 use App\Models\Photo;
 use App\Models\Rating;
@@ -124,6 +125,64 @@ class ReviewController extends Controller
             if ($request->hasFile('photos')) {
                 $this->storePhotos($request->file('photos'),$newReview->id);
             }
+            DB::commit();
+            return response()->json([
+                "message" => "created successfully"
+            ], 200);
+        } catch (Exception $e) {
+            DB::rollback();
+            return response()->json(["error" => $e->getMessage()], 500);
+        }
+    }
+
+    function postAnonymousReview($prefecture_id, $city_id, AnonymousReviewRequest $request)
+    {
+        // IPアドレスをハッシュ化
+        $ipHash = hash('sha256', $request->ip() . config('app.key'));
+
+        // 同一IP・同一市のレビューが存在するかチェック
+        $exists = Review::where('ip_hash', $ipHash)
+            ->where('city_id', $city_id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'error' => 'この市にはすでにレビューを投稿済みです'
+            ], 409);
+        }
+
+        DB::beginTransaction();
+        try {
+            $newReview = Review::create([
+                "user_id" => null,
+                "prefecture_id" => $prefecture_id,
+                "city_id" => $city_id,
+                "town_name" => $request->townName,
+                "good_comment" => $request->goodComment,
+                "bad_comment" => $request->badComment,
+                "is_anonymous" => true,
+                "ip_hash" => $ipHash,
+            ]);
+
+            if ($newReview->isEmpty) {
+                DB::rollback();
+                return response()->json(["message" => "Review not found"], 404);
+            }
+
+            Rating::create([
+                "livability" => $request->livability,
+                "city_policies" => $request->cityPolicies,
+                "child_rearing" => $request->childRearing,
+                "safety" => $request->safety,
+                "public_transportation" => $request->publicTransportation,
+                "review_id" => $newReview->id,
+                "average_rating" => $request->averageRating,
+            ]);
+
+            if ($request->hasFile('photos')) {
+                $this->storePhotos($request->file('photos'), $newReview->id);
+            }
+
             DB::commit();
             return response()->json([
                 "message" => "created successfully"
@@ -289,25 +348,31 @@ class ReviewController extends Controller
         DB::beginTransaction();
         try{
             $user = Auth::user();
-            Like::create(
-            [
+            Like::create([
                 'user_id' => $user->id,
                 'review_id' => $reviewId
             ]);
+
+            // 投稿者を取得（匿名投稿の場合はnull）
             $postedBy = User::whereHas('reviews',function($query) use($reviewId){
                 $query->where('id',$reviewId);
             })->first();
-            $url =  config('app.frontend_url'). '/'. 'home';
-            $payload = [
-                'title'   => 'あなたの投稿にいいねされました！',
-                'content' => "{$user->name} さんがあなたの投稿にいいねしました。",
-                'url'     => $url,
-                'liked_by_user' => $user,
-                'type'   => \App\Consts\NotificationType::LIKE,
-                'date' => now()->toDateString()
-            ];
-            $notification = new InformationNotification($payload);
-            $postedBy->notify($notification);
+
+            // 匿名投稿でない場合のみ通知を送信
+            if ($postedBy) {
+                $url =  config('app.frontend_url'). '/'. 'home';
+                $payload = [
+                    'title'   => 'あなたの投稿にいいねされました！',
+                    'content' => "{$user->name} さんがあなたの投稿にいいねしました。",
+                    'url'     => $url,
+                    'liked_by_user' => $user,
+                    'type'   => \App\Consts\NotificationType::LIKE,
+                    'date' => now()->toDateString()
+                ];
+                $notification = new InformationNotification($payload);
+                $postedBy->notify($notification);
+            }
+
             DB::commit();
             return response()->json([
                 "message" => "You Liked the review",
@@ -319,6 +384,7 @@ class ReviewController extends Controller
             ], 500);
         }
     }
+
     function unlike($reviewId)
     {
         try{
