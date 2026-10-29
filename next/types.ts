@@ -76,7 +76,7 @@ export interface Photo {
 
 export interface Review {
   id: number;
-  user_id: number;
+  user_id: number | null;
   city_id: number;
   prefecture_id: number;
   town_name: string | null;
@@ -90,9 +90,10 @@ export interface Review {
   rating: Rating;
   photos: Photo[];
   likes: unknown[];
-  user: User;
+  user: User | null;
   is_liked: boolean;
   likes_count: number;
+  is_anonymous: boolean;
 };
 
 export interface Notification {

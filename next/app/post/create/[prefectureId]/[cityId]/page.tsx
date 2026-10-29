@@ -133,7 +133,14 @@ export default function RatingPost() {
 
     const prefectureId = params.prefectureId;
     const cityId = params.cityId;
-    const url: string = `${UtilApi.API_URL}/api/post/city_review/${prefectureId}/${cityId}`;
+    const token = AuthService.getSesstion();
+    const isLoggedIn = !!token;
+
+    // ログイン状態に応じてエンドポイントを切り替え
+    const url: string = isLoggedIn
+      ? `${UtilApi.API_URL}/api/post/city_review/${prefectureId}/${cityId}`
+      : `${UtilApi.API_URL}/api/guest/city_review/${prefectureId}/${cityId}`;
+
     const formData = new FormData();
     dataSet.photos = files;
     dataSet.averageRating = averageScore;
@@ -160,12 +167,17 @@ export default function RatingPost() {
       }
     }
     try {
+      const headers: HeadersInit = {
+        'Accept': 'application/json',
+      };
+      // ログイン済みの場合のみAuthorizationヘッダーを追加
+      if (isLoggedIn) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${AuthService.getSesstion()}`,
-        },
+        headers,
         body: formData,
       });
       const data = await res.json();
@@ -174,7 +186,13 @@ export default function RatingPost() {
         setIsModalOpen(true);
         setModalType('Success');
         setModalTitle('レビューが投稿されました。');
-        setModalMessage('');
+        setModalMessage(isLoggedIn ? '' : '匿名で投稿されました。');
+      } else if (res.status === 409) {
+        // 重複投稿エラー
+        setIsModalOpen(true);
+        setModalType('Error');
+        setModalTitle('投稿できませんでした');
+        setModalMessage(data.error || 'この市にはすでにレビューを投稿済みです');
       } else {
         const message = UtilApi.selectedErrorMessage(["safety", "childRearing", "cityPolicies", "publicTransportation", "livability", "goodComment", "badComment", "average_rating", "townName"], data["errors"])
         setIsModalOpen(true);

@@ -8,7 +8,8 @@ import { usePathname } from "next/navigation";
 
 interface ReviewHeaderProps {
   reviewId?: number;
-  user: User;
+  user: User | null;
+  isAnonymous?: boolean;
   onMenuAction?: (action: MenuAction, id: number) => void | Promise<void>;
   onUserClick?: (userId: number) => void;
 }
@@ -16,6 +17,7 @@ interface ReviewHeaderProps {
 export default function ReviewHeader({
   reviewId,
   user,
+  isAnonymous = false,
   onMenuAction,
   onUserClick,
 }: ReviewHeaderProps) {
@@ -27,6 +29,9 @@ export default function ReviewHeader({
   const setLoading = (loading: boolean) => {
     setImageLoading(loading);
   };
+
+  // 匿名ユーザーかどうかを判定
+  const isAnonymousUser = isAnonymous || !user;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -50,16 +55,18 @@ export default function ReviewHeader({
     <div
       className="flex items-center justify-between space-x-3"
       onClick={() => {
-        onUserClick?.(user.id);
+        if (!isAnonymousUser && user) {
+          onUserClick?.(user.id);
+        }
       }}
     >
       {/* 左側：ユーザーアイコンと名前 */}
       <div className="flex items-center space-x-3">
-        {user.image_path == null ? (
+        {isAnonymousUser || user?.image_path == null ? (
           <MaterialSymbolsLightPersonOutlineRounded
             width={40}
             height={40}
-            className="rounded-full border-2 text-green-500 border-green-500"
+            className={`rounded-full border-2 ${isAnonymousUser ? 'text-gray-400 border-gray-400' : 'text-green-500 border-green-500'}`}
           />
         ) : (
           <div className="relative w-[40px] h-[40px]">
@@ -77,7 +84,9 @@ export default function ReviewHeader({
           </div>
         )}
         <div>
-          <div className="font-semibold text-black">{user.name}</div>
+          <div className={`font-semibold ${isAnonymousUser ? 'text-gray-500' : 'text-black'}`}>
+            {isAnonymousUser ? '匿名' : user?.name}
+          </div>
         </div>
       </div>
 
