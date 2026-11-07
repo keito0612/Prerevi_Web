@@ -34,7 +34,7 @@ export class AuthService {
         success(response.data.token);
       } else {
         const errorMessage = UtilApi.getErrorMessage(response, ['email', 'password']);
-        if (response.error.errors) {
+        if (response.error?.errors) {
           validetionMessage(errorMessage);
         } else {
           failure(errorMessage);

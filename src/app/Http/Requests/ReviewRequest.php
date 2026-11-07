@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ReviewRequest extends FormRequest
 {
@@ -57,16 +55,5 @@ class ReviewRequest extends FormRequest
             'townName.required' => '町を選択してください。',
             'townName.max' => '町名は100文字以内でお願いします。'
         ];
-    }
-
-    protected function failedValidation(Validator $validator)
-    {
-        $res = response()->json(
-            [
-                'errors' => $validator->errors(),
-            ],
-            400
-        );
-        throw new HttpResponseException($res);
     }
 }

@@ -22,6 +22,11 @@ export class UtilApi {
       return "";
     }
 
+    // response.errorが存在しない場合のフォールバック
+    if (!response.error) {
+      return "エラーが発生しました";
+    }
+
     // バリデーションエラーがある場合
     if (keys && response.error.errors) {
       const message = this.selectedErrorMessage(keys, response.error.errors);

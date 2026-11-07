@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
 
 class CityRequest extends FormRequest
 {
@@ -27,16 +25,5 @@ class CityRequest extends FormRequest
             'name' => 'required|string|max:255',
             'image_path' => 'image|mimes:jpeg,png,jpg|max:2048'
         ];
-    }
-
-    protected function failedValidation(Validator $validator)
-    {
-        $res = response()->json(
-            [
-                'errors' => $validator->errors(),
-            ],
-            400
-        );
-        throw new HttpResponseException($res);
     }
 }

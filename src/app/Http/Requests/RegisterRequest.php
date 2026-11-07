@@ -3,8 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class RegisterRequest extends FormRequest
 {
@@ -43,15 +41,5 @@ class RegisterRequest extends FormRequest
             'password.min' => 'パスワードは8文字以上で入力してください。',
             'password.max' => 'パスワードは12文字以下で入力してください。',
         ];
-    }
-    protected function failedValidation(Validator $validator)
-    {
-        $res = response()->json(
-            [
-                'errors' => $validator->errors(),
-            ],
-            400
-        );
-        throw new HttpResponseException($res);
     }
 }
