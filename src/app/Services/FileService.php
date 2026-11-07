@@ -65,4 +65,32 @@ class FileService
     {
         return Storage::disk($this->disk);
     }
+
+    /**
+     * URLからストレージパスを抽出する
+     */
+    public function extractPathFromUrl(string $url): ?string
+    {
+        // /storage/ 以降のパスを取得 (ローカル)
+        if (preg_match('/\/storage\/(.+)$/', $url, $matches)) {
+            return $matches[1];
+        }
+        // R2などの外部ストレージの場合、バケット名以降のパスを取得
+        if (preg_match('/reviewImage\/.+$/', $url, $matches)) {
+            return $matches[0];
+        }
+        return null;
+    }
+
+    /**
+     * URLからパスを抽出してファイルを削除する
+     */
+    public function deleteByUrl(string $url): bool
+    {
+        $path = $this->extractPathFromUrl($url);
+        if ($path && $this->exists($path)) {
+            return $this->delete($path);
+        }
+        return false;
+    }
 }

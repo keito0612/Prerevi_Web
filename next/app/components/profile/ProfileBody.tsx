@@ -1,6 +1,6 @@
 "use client";
 import { UtilApi } from '@/Util/Util_api';
-import { Profile, ResultType } from '@/types';
+import { ApiResponse, Profile, ResultType } from '@/types';
 import ProfileList from './ProfileList';
 import { AuthService } from '@/service/authServise';
 import ProfileSkeleton from '../ProfileSkeleton';
@@ -40,17 +40,16 @@ const ProfileBody: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         }
       });
-      if (res.ok) {
-        const data = await res.json();
-        const profileData: Profile = data['profile'] as Profile;
-        setProfile(profileData);
-      } else if (res.status === 401) {
+      const response: ApiResponse<{ profile: Profile }> = await res.json();
+      if (response.success) {
+        setProfile(response.data.profile);
+      } else if (response.error.code === 'UNAUTHORIZED') {
         setProfile(null);
         router.push("/unauthorized")
-      } else if (res.status === 404) {
+      } else if (response.error.code === 'NOT_FOUND') {
         notFound();
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (e) {
       console.error("プロフィール取得エラー:", e);
@@ -69,27 +68,28 @@ const ProfileBody: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         }
       });
+      const response: ApiResponse<{ message: string }> = await res.json();
       setIsConfirmModalOpen(false);
-      if (res.ok) {
+      if (response.success) {
         setIsResultModalOpen(true);
         setModalType('Success');
         setModalTitle('投稿を削除しました。');
         setModalMessage('');
         setIsSkeleton(false);
-      } else if (res.status === 404) {
+      } else if (response.error.code === 'NOT_FOUND') {
         setIsResultModalOpen(true);
         setModalType('Error');
         setModalTitle('投稿を削除できませんでした。');
         setModalMessage('削除する投稿が見つかりませんでした。もう一度お試しください。');
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (e) {
       setIsConfirmModalOpen(true);
       setModalType('Error');
       setModalTitle('投稿を削除できませんでした。');
       setModalMessage('サーバーの不具合により投稿を削除できませんでした。もう一度お試しください。');
-      console.error("プロフィール取得エラー:", e);
+      console.error("レビュー削除エラー:", e);
     }
   }
 

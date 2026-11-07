@@ -1,6 +1,23 @@
 export type ResultType = "Normal" | "Success" | "Error" | "Warning";
 export type MenuAction = "edit" | "delete";
 export type RatingProperty = 'safety' | 'public_transportation' | 'child_rearing' | 'city_policies' | 'livability' | 'average_rating';
+
+// API Response Types
+export interface ApiSuccessResponse<T> {
+  success: true;
+  data: T;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    errors?: { [key: string]: string[] };
+  };
+}
+
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 export const NotificationType = {
   POST: "post",
   LIKE: "like",

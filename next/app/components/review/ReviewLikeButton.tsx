@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IconParkOutlineThumbsUp } from '../icons/IconParkOutlineThumbsUp';
-import { Review } from '@/types';
+import { ApiResponse, Review } from '@/types';
 import { UtilApi } from '@/Util/Util_api';
 import { AuthService } from '@/service/authServise';
 
@@ -28,11 +28,12 @@ const ReviewLikeButton: React.FC<ReviewLikeButtonProps> = ({ review }) => {
           'Authorization': `Bearer ${AuthService.getSesstion()}`,
         },
       });
-      if (res.ok) {
+      const response: ApiResponse<{ message: string }> = await res.json();
+      if (response.success) {
         setIsLiked(!isLiked);
         setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (error) {
       throw new Error(`${error}`);

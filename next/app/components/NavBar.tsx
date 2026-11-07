@@ -11,7 +11,7 @@ import {
   MenuItems,
 } from "@headlessui/react";
 import Link from "next/link";
-import { ResultType, User } from "@/types";
+import { ApiResponse, ResultType, User } from "@/types";
 import { UtilApi } from "@/Util/Util_api";
 import { AuthService } from "@/service/authServise";
 import ProfileImage from "./profile/ProfileImage";
@@ -62,9 +62,10 @@ function NavBar({ title, rightButton, onBackClick = () => { }, onBack = false }:
           Authorization: `Bearer ${AuthService.getSesstion()}`,
         },
       });
-      const data = await res.json();
-      const user: User = data["user"] as User;
-      setUser(user);
+      const response: ApiResponse<{ user: User }> = await res.json();
+      if (response.success) {
+        setUser(response.data.user);
+      }
     } catch (error) {
       console.error("Failed to fetch user:", error);
     }
@@ -101,9 +102,9 @@ function NavBar({ title, rightButton, onBackClick = () => { }, onBack = false }:
           Authorization: `Bearer ${AuthService.getSesstion()}`,
         },
       });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Request failed: ${res.status} - ${errorText}`);
+      const response: ApiResponse<{ message: string }> = await res.json();
+      if (!response.success) {
+        throw new Error(response.error.message);
       }
 
       setModalType('Success');
@@ -112,11 +113,11 @@ function NavBar({ title, rightButton, onBackClick = () => { }, onBack = false }:
       setIsConfirmModalOpen(true);
       AuthService.deleteSesstion();
     } catch (error) {
-      setModalType('Success');
+      setModalType('Error');
       setModalTitle('ログアウトに失敗しました。');
       setModalMessage('もう一度お試しください。問題が続く場合は、ページを再読み込みしてください。');
       setIsConfirmModalOpen(true);
-      console.error("Failed to fetch user:", error);
+      console.error("Failed to logout:", error);
     }
   };
 

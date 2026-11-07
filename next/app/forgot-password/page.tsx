@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import SnackbarComponent from '../components/SnackBar';
 import Loading2 from '../components/Loading2';
 import Modal from '../components/Modal';
-import { ResultType } from '@/types';
+import { ApiResponse, ResultType } from '@/types';
 import { UtilApi } from '@/Util/Util_api';
 
 interface Inputs {
@@ -33,19 +33,19 @@ export default function ForgotPassword() {
         body: JSON.stringify(data),
       });
 
-      const result = await res.json();
+      const response: ApiResponse<{ message: string }> = await res.json();
 
-      if (!res.ok) {
+      if (!response.success) {
         // バリデーションエラー（メールアドレスが登録されていない場合など）
-        if (result?.errors?.email) {
+        if (response.error.errors?.email) {
           setError('email', {
             type: 'server',
-            message: result.errors.email[0],
+            message: response.error.errors.email[0],
           });
         } else {
           setModalType('Error');
           setModalTitle('メールの送信に失敗しました。');
-          setModalMessage(result?.message || 'サーバーに問題が発生しました。もう一度お試しください。');
+          setModalMessage(response.error.message || 'サーバーに問題が発生しました。もう一度お試しください。');
           setIsModalOpen(true);
         }
       } else {

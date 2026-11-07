@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\Response;
 
 class SupabaseAuthController extends Controller
 {
@@ -28,8 +27,9 @@ class SupabaseAuthController extends Controller
         ]);
 
         return response()->json([
-            'url' => $authUrl
-        ], Response::HTTP_OK);
+            'success' => true,
+            'data' => ['url' => $authUrl]
+        ]);
     }
 
     /**
@@ -43,42 +43,35 @@ class SupabaseAuthController extends Controller
             'access_token' => 'required|string',
         ]);
 
-        try {
-            // Supabaseからユーザー情報を取得
-            $supabaseUrl = config('services.supabase.url');
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $request->access_token,
-                'apikey' => config('services.supabase.key'),
-            ])->get("{$supabaseUrl}/auth/v1/user");
+        // Supabaseからユーザー情報を取得
+        $supabaseUrl = config('services.supabase.url');
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $request->access_token,
+            'apikey' => config('services.supabase.key'),
+        ])->get("{$supabaseUrl}/auth/v1/user");
 
-            if (!$response->successful()) {
-                Log::error('Supabase auth failed', ['response' => $response->body()]);
-                return response()->json([
-                    'message' => '認証に失敗しました'
-                ], Response::HTTP_UNAUTHORIZED);
-            }
+        if (!$response->successful()) {
+            throw ApiException::unauthorized('認証に失敗しました');
+        }
 
-            $supabaseUser = $response->json();
+        $supabaseUser = $response->json();
 
-            // ユーザー情報を取得
-            $email = $supabaseUser['email'] ?? null;
-            $supabaseId = $supabaseUser['id'] ?? null;
-            $name = $supabaseUser['user_metadata']['full_name']
-                ?? $supabaseUser['user_metadata']['name']
-                ?? explode('@', $email)[0];
-            $avatarUrl = $supabaseUser['user_metadata']['avatar_url']
-                ?? $supabaseUser['user_metadata']['picture']
-                ?? null;
-            $provider = $supabaseUser['app_metadata']['provider'] ?? 'google';
+        // ユーザー情報を取得
+        $email = $supabaseUser['email'] ?? null;
+        $supabaseId = $supabaseUser['id'] ?? null;
+        $name = $supabaseUser['user_metadata']['full_name']
+            ?? $supabaseUser['user_metadata']['name']
+            ?? explode('@', $email)[0];
+        $avatarUrl = $supabaseUser['user_metadata']['avatar_url']
+            ?? $supabaseUser['user_metadata']['picture']
+            ?? null;
+        $provider = $supabaseUser['app_metadata']['provider'] ?? 'google';
 
-            if (!$email || !$supabaseId) {
-                return response()->json([
-                    'message' => 'ユーザー情報の取得に失敗しました'
-                ], Response::HTTP_BAD_REQUEST);
-            }
+        if (!$email || !$supabaseId) {
+            throw ApiException::badRequest('ユーザー情報の取得に失敗しました');
+        }
 
-            DB::beginTransaction();
-
+        return DB::transaction(function () use ($supabaseId, $email, $name, $avatarUrl, $provider) {
             // 既存ユーザーを検索（supabase_idまたはemail）
             $user = User::where('supabase_id', $supabaseId)
                 ->orWhere('email', $email)
@@ -111,25 +104,19 @@ class SupabaseAuthController extends Controller
             $user->tokens()->delete();
             $token = $user->createToken("login:user{$user->id}")->plainTextToken;
 
-            DB::commit();
-
             return response()->json([
-                'message' => 'ログインしました',
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'image_path' => $user->image_path,
+                'success' => true,
+                'data' => [
+                    'message' => 'ログインしました',
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'image_path' => $user->image_path,
+                    ]
                 ]
-            ], Response::HTTP_OK);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Supabase auth error', ['error' => $e->getMessage()]);
-            return response()->json([
-                'message' => '認証処理中にエラーが発生しました'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+            ]);
+        });
     }
 }

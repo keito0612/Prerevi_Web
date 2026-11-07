@@ -18,7 +18,8 @@ class FcmController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => 'FCM token updated successfully',
+            'success' => true,
+            'data' => ['message' => 'FCMトークンを更新しました']
         ]);
     }
 
@@ -29,7 +30,8 @@ class FcmController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => 'FCM token deleted successfully',
+            'success' => true,
+            'data' => ['message' => 'FCMトークンを削除しました']
         ]);
     }
 }

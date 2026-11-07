@@ -6,7 +6,7 @@ import NavigationBottomBar from '../components/NavigationBottomBar';
 import SheetModal from '../components/SheetModal';
 import { useRouter, useSearchParams } from 'next/navigation'
 import StarsRating from '../components/StarsRating';
-import { ChartData, City, Photo, Rating, RatingProperty, Review } from '@/types';
+import { ApiResponse, ChartData, City, Photo, Rating, RatingProperty, Review } from '@/types';
 import CityList from '../components/CityList';
 import { UtilApi } from '@/Util/Util_api';
 import Tabs, { Tab } from '../components/Tabs';
@@ -261,9 +261,11 @@ function HomeContent() {
         throw new Error(`HTTP error! Status: ${res.status} `);
       }
 
-      const data = await res.json();
-      const citys: City[] = data['citys'];
-      setCitys(citys);
+      const response: ApiResponse<{ citys: City[] }> = await res.json();
+      if (!response.success) {
+        throw new Error(response.error.message);
+      }
+      setCitys(response.data.citys);
     } catch (error) {
       console.error('エラー発生', error);
     }
@@ -285,9 +287,12 @@ function HomeContent() {
         throw new Error(`HTTP error! Status: ${res.status} `);
       }
 
-      const data = await res.json();
-      const reviewList: Review[] = data['reviews'];
-      const allReviewPhotos: Photo[] = data['photos'];
+      const response: ApiResponse<{ reviews: Review[], photos: Photo[] }> = await res.json();
+      if (!response.success) {
+        throw new Error(response.error.message);
+      }
+      const reviewList: Review[] = response.data.reviews;
+      const allReviewPhotos: Photo[] = response.data.photos;
       const ratingsOnly: Rating[] = reviewList.map(review => review.rating);
       setAllReviewPhotos(allReviewPhotos);
 
@@ -333,9 +338,12 @@ function HomeContent() {
         throw new Error(`HTTP error! Status: ${res.status} `);
       }
 
-      const data = await res.json();
-      const reviewList: Review[] = data['reviews'];
-      const allReviewPhotos: Photo[] = data['photos'];
+      const response: ApiResponse<{ reviews: Review[], photos: Photo[] }> = await res.json();
+      if (!response.success) {
+        throw new Error(response.error.message);
+      }
+      const reviewList: Review[] = response.data.reviews;
+      const allReviewPhotos: Photo[] = response.data.photos;
       const ratingsOnly: Rating[] = reviewList.map(review => review.rating);
 
       // 各カテゴリの平均を計算

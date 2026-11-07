@@ -5,7 +5,7 @@ import { UtilApi } from '@/Util/Util_api';
 import { AuthService } from '@/service/authServise';
 import { useRouter } from 'next/navigation';
 import NotificationList from '../components/notification/NotificationList';
-import { Notification, ResultType } from '@/types';
+import { ApiResponse, Notification, ResultType } from '@/types';
 import { useEffect, useState } from 'react';
 import Loading2 from '../components/Loading2';
 import Modal from '../components/Modal';
@@ -43,17 +43,24 @@ function Notifications() {
         },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data['notifications'] as Notification[]);
-        setCurrentPage(data['current_page']);
-        setLastPage(data['last_page']);
-        setTotal(data['total']);
-        setPerPage(data['per_page']);
-      } else if (res.status === 401) {
+      const response: ApiResponse<{
+        notifications: Notification[];
+        current_page: number;
+        last_page: number;
+        total: number;
+        per_page: number;
+      }> = await res.json();
+
+      if (response.success) {
+        setNotifications(response.data.notifications);
+        setCurrentPage(response.data.current_page);
+        setLastPage(response.data.last_page);
+        setTotal(response.data.total);
+        setPerPage(response.data.per_page);
+      } else if (response.error.code === 'UNAUTHORIZED') {
         router.push("/unauthorized");
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (e) {
       setModalType('Error');
@@ -87,7 +94,9 @@ function Notifications() {
         },
       });
 
-      if (res.ok) {
+      const response: ApiResponse<{ message: string }> = await res.json();
+
+      if (response.success) {
         setNotifications([]);
         setCurrentPage(1);
         setLastPage(1);
@@ -96,10 +105,10 @@ function Notifications() {
         setModalTitle('削除完了');
         setModalMessage('すべての通知を削除しました。');
         setIsOpanModal(true);
-      } else if (res.status === 401) {
+      } else if (response.error.code === 'UNAUTHORIZED') {
         router.push("/unauthorized");
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (e) {
       console.error("通知一括削除エラー:", e);

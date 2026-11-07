@@ -1,6 +1,7 @@
 import { AuthService } from "@/service/authServise";
+import { ApiResponse } from "@/types";
 
-export const fetcher = async (url: string) => {
+export const fetcher = async <T>(url: string): Promise<T> => {
   const token = AuthService.getSesstion();
 
   if (!token) {
@@ -20,5 +21,11 @@ export const fetcher = async (url: string) => {
     throw new Error('Failed to fetch');
   }
 
-  return res.json();
+  const json: ApiResponse<T> = await res.json();
+
+  if (!json.success) {
+    throw new Error(json.error.message);
+  }
+
+  return json.data;
 };

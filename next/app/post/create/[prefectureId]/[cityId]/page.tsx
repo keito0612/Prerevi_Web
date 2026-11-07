@@ -3,7 +3,7 @@
 import Chart from "@/app/components/Chart";
 import StarsRating from "@/app/components/StarsRating";
 import TextErea from "@/app/components/TextErea";
-import { ChartData, ResultType } from "@/types";
+import { ApiResponse, ChartData, ResultType } from "@/types";
 import { Path, useForm } from 'react-hook-form'
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -180,21 +180,21 @@ export default function RatingPost() {
         headers,
         body: formData,
       });
-      const data = await res.json();
+      const response: ApiResponse<{ message: string }> = await res.json();
       setLoading(false);
-      if (res.ok) {
+      if (response.success) {
         setIsModalOpen(true);
         setModalType('Success');
         setModalTitle('レビューが投稿されました。');
         setModalMessage(isLoggedIn ? '' : '匿名で投稿されました。');
-      } else if (res.status === 409) {
+      } else if (response.error.code === 'CONFLICT') {
         // 重複投稿エラー
         setIsModalOpen(true);
         setModalType('Error');
         setModalTitle('投稿できませんでした');
-        setModalMessage(data.error || 'この市にはすでにレビューを投稿済みです');
+        setModalMessage(response.error.message || 'この市にはすでにレビューを投稿済みです');
       } else {
-        const message = UtilApi.selectedErrorMessage(["safety", "childRearing", "cityPolicies", "publicTransportation", "livability", "goodComment", "badComment", "average_rating", "townName"], data["errors"])
+        const message = UtilApi.getErrorMessage(response, ["safety", "childRearing", "cityPolicies", "publicTransportation", "livability", "goodComment", "badComment", "average_rating", "townName"]);
         setIsModalOpen(true);
         setModalType('Error');
         setModalTitle('エラーが発生しました。');

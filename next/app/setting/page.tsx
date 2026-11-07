@@ -14,7 +14,7 @@ import NavBar from '../components/NavBar';
 import NavigationBottomBar from '../components/NavigationBottomBar';
 import { IconType } from 'react-icons/lib';
 import Modal from '../components/Modal';
-import { ResultType, UserSetting } from '@/types';
+import { ApiResponse, ResultType, UserSetting } from '@/types';
 import { UtilApi } from '@/Util/Util_api';
 import { AuthService } from '@/service/authServise';
 import { useRouter } from 'next/navigation';
@@ -135,11 +135,12 @@ export default function SettingsPage() {
           Authorization: `Bearer ${AuthService.getSesstion()}`,
         },
       });
-      if (res.ok) {
+      const response: ApiResponse<{ message: string }> = await res.json();
+      if (response.success) {
         setEmailNotifications(!emailNotifications);
       }
     } catch (error) {
-      console.error("Failed to fetch user:", error);
+      console.error("Failed to update email notification:", error);
     }
   }
 
@@ -153,9 +154,9 @@ export default function SettingsPage() {
           Authorization: `Bearer ${AuthService.getSesstion()}`,
         },
       });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Request failed: ${res.status} - ${errorText}`);
+      const response: ApiResponse<{ message: string }> = await res.json();
+      if (!response.success) {
+        throw new Error(response.error.message);
       }
 
       setModalType('Success');
@@ -164,11 +165,11 @@ export default function SettingsPage() {
       setIsConfirmModalOpen(true);
       AuthService.deleteSesstion();
     } catch (error) {
-      setModalType('Success');
+      setModalType('Error');
       setModalTitle('ログアウトに失敗しました。');
       setModalMessage('もう一度お試しください。問題が続く場合は、ページを再読み込みしてください。');
       setIsConfirmModalOpen(true);
-      console.error("Failed to fetch user:", error);
+      console.error("Failed to logout:", error);
     }
   };
 
@@ -198,13 +199,12 @@ export default function SettingsPage() {
             Authorization: `Bearer ${AuthService.getSesstion()}`,
           },
         });
-        if (res.ok) {
-          const data = await res.json();
-          const userSetting = data['user_setting'] as UserSetting;
-          setEmailNotifications(userSetting.email_notification);
+        const response: ApiResponse<{ user_setting: UserSetting }> = await res.json();
+        if (response.success) {
+          setEmailNotifications(response.data.user_setting.email_notification);
         }
       } catch (error) {
-        console.error("Failed to fetch user:", error);
+        console.error("Failed to fetch user setting:", error);
       } finally {
         setIsLoading(false);
       }

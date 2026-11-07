@@ -3,115 +3,97 @@
 namespace App\Http\Controllers;
 
 use App\Consts\NotificationType;
+use App\Exceptions\ApiException;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
+use Symfony\Component\HttpFoundation\Response;
 
 class NotificationController extends Controller
 {
-    private function user(): User{
+    private function user(): User
+    {
         return Auth::user();
     }
+
     public function getNotifications()
     {
         $this->user()->notifications->markAsRead();
-         // ページネーション付きで通知を取得
-        $notificationsPaginated = $this->user()->notifications()->paginate(15);
-        // 各通知の data を整形
-        $items = collect($notificationsPaginated->items())->map(function ($notification) {
-            $data = $notification->data;
-            return [
-                'id' => $notification->id,
-                'title' => $data['title'] ?? '通知',
-                'content' => $data['content'] ?? '',
-                'liked_by_user' => $data['liked_by_user'] ?? null,
-                'time' => $notification->created_at->diffForHumans(),
-                'type' => $data['type'] ?? NotificationType::POST,
-                'read_at' => $notification->read_at,
-            ];
-        });
+        $paginated = $this->user()->notifications()->paginate(15);
 
-        return response()->json([
-            'notifications' => $items,
-            'current_page' => $notificationsPaginated->currentPage(),
-            'last_page' => $notificationsPaginated->lastPage(),
-            'per_page' => $notificationsPaginated->perPage(),
-            'total' => $notificationsPaginated->total(),
-        ], 200);
-    }
-
-    public function detail($id)
-    {
-        $notification =  $this->user()->notifications()->find($id);
-        $data = $notification->data;
-        $formattedNotification = [
+        $items = collect($paginated->items())->map(fn($notification) => [
             'id' => $notification->id,
-            'title' => $data['title'] ?? '通知',
-            'content' => $data['content'] ?? '',
-            'userImage' => $data['userImage'] ?? null,
-            'liked_by_user' => $data['liked_by_user'] ?? null,
+            'title' => $notification->data['title'] ?? '通知',
+            'content' => $notification->data['content'] ?? '',
+            'liked_by_user' => $notification->data['liked_by_user'] ?? null,
             'time' => $notification->created_at->diffForHumans(),
-            'type' => $data['type'] ?? NotificationType::POST,
+            'type' => $notification->data['type'] ?? NotificationType::POST,
             'read_at' => $notification->read_at,
-        ];
+        ]);
+
         return response()->json([
-            'notification' => $formattedNotification
-        ], 200);
+            'success' => true,
+            'data' => [
+                'notifications' => $items,
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ]
+        ]);
     }
 
+    public function detail(string $id)
+    {
+        $notification = $this->user()->notifications()->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'notification' => [
+                    'id' => $notification->id,
+                    'title' => $notification->data['title'] ?? '通知',
+                    'content' => $notification->data['content'] ?? '',
+                    'userImage' => $notification->data['userImage'] ?? null,
+                    'liked_by_user' => $notification->data['liked_by_user'] ?? null,
+                    'time' => $notification->created_at->diffForHumans(),
+                    'type' => $notification->data['type'] ?? NotificationType::POST,
+                    'read_at' => $notification->read_at,
+                ]
+            ]
+        ]);
+    }
 
     public function unreadCount()
     {
-        $count = $this->user()->unreadNotifications->count();
-
         return response()->json([
-            'unread_count' => $count,
-        ], 200);
+            'success' => true,
+            'data' => ['unread_count' => $this->user()->unreadNotifications->count()]
+        ]);
     }
-    function allDeleteNotification()
+
+    public function allDeleteNotification()
     {
-        try{
-            DB::beginTransaction();
+        return DB::transaction(function () {
             $this->user()->notifications()->delete();
-            DB::commit();
-            return response()->json(
-            [
-                    'message' => 'all delete notifications'
-                ],201
-            );
-        }catch(Exception $e){
-            DB::commit();
-            return response()->json(
-                [
-                    'message' => $e->getMessage()
-                ],500
-            );
-        }
+
+            return response()->json([
+                'success' => true,
+                'data' => ['message' => '全ての通知を削除しました']
+            ]);
+        });
     }
 
-    function deleteNotification($id)
+    public function deleteNotification(string $id)
     {
-        try{
-            DB::beginTransaction();
-            $this->user()->notifications()->find($id)->delete();
-            DB::commit();
-            return response()->json(
-            [
-                    'message' => 'delete notification'
-                ],201
-            );
-        }catch(Exception $e){
-            DB::commit();
-            return response()->json(
-                [
-                    'message' => $e->getMessage()
-                ],500
-            );
-        }
-    }
+        return DB::transaction(function () use ($id) {
+            $notification = $this->user()->notifications()->findOrFail($id);
+            $notification->delete();
 
+            return response()->json([
+                'success' => true,
+                'data' => ['message' => '通知を削除しました']
+            ]);
+        });
+    }
 }

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use Symfony\Component\HttpFoundation\Response;
 
 class GoogleAuthController extends Controller
 {
@@ -100,7 +99,8 @@ class GoogleAuthController extends Controller
             ->getTargetUrl();
 
         return response()->json([
-            'url' => $redirectUrl
-        ], Response::HTTP_OK);
+            'success' => true,
+            'data' => ['url' => $redirectUrl]
+        ]);
     }
 }

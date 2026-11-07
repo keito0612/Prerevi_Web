@@ -7,7 +7,7 @@ import ProfileEditImageButton from "@/app/components/profile/ProfileEditImageBut
 import TextErea from "@/app/components/TextErea";
 import TextField from "@/app/components/TextField";
 import { AuthService } from "@/service/authServise";
-import { Profile, ResultType } from "@/types";
+import { ApiResponse, Profile, ResultType } from "@/types";
 import { UtilApi } from "@/Util/Util_api";
 import { Close } from "@mui/icons-material";
 import { redirect, useRouter } from "next/navigation";
@@ -59,19 +59,19 @@ const ProfileEditModal: React.FC = () => {
           'Authorization': `Bearer ${token}`,
         }
       });
-      if (res.ok) {
-        const data = await res.json();
-        const profileData: Profile = data['profile'] as Profile;
+      const response: ApiResponse<{ profile: Profile }> = await res.json();
+      if (response.success) {
+        const profileData = response.data.profile;
         setPreviewUrl(profileData.image_path);
         reset({
           name: profileData.name,
           comment: profileData.comment ?? '',
           profileImage: profileData.image_path ? profileData.image_path : null
         });
-      } else if (res.status === 401) {
+      } else if (response.error.code === 'UNAUTHORIZED') {
         redirect('/home');
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (e) {
       console.error("プロフィール取得エラー:", e);
@@ -110,15 +110,15 @@ const ProfileEditModal: React.FC = () => {
         },
         body: formData,
       });
-      const data = await res.json();
+      const response: ApiResponse<{ message: string }> = await res.json();
       setLoading(false);
-      if (res.ok) {
+      if (response.success) {
         setIsModalOpen(true);
         setModalType('Success');
         setModalTitle('プロフィールを編集しました。');
         setModalMessage('');
       } else {
-        const message = UtilApi.selectedErrorMessage(["name", "comment", "profileImage"], data["errors"])
+        const message = UtilApi.getErrorMessage(response, ["name", "comment", "profileImage"]);
         setIsModalOpen(true);
         setModalType('Error');
         setModalTitle('エラーが発生しました。');
