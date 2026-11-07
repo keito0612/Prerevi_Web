@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import Chart from "@/app/components/Chart";
 import StarsRating from "@/app/components/StarsRating";
 import TextErea from "@/app/components/TextErea";
-import { ChartData, ResultType, Review } from "@/types";
+import { ApiResponse, ChartData, ResultType, Review } from "@/types";
 import { Path, useForm } from 'react-hook-form';
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -66,8 +66,11 @@ export default function RatingEditPost() {
           'Authorization': `Bearer ${AuthService.getSesstion()}`,
         },
       });
-      const data = await res.json();
-      const review: Review = data['review'] as Review;
+      const response: ApiResponse<{ review: Review }> = await res.json();
+      if (!response.success) {
+        throw new Error(response.error.message);
+      }
+      const review: Review = response.data.review;
       reset({
         safety: review.rating.safety,
         childRearing: review.rating.child_rearing,
@@ -225,14 +228,14 @@ export default function RatingEditPost() {
         },
         body: formData,
       });
-      const data = await res.json();
+      const response: ApiResponse<{ message: string }> = await res.json();
       setLoading(false);
-      if (res.ok) {
+      if (response.success) {
         setIsModalOpen(true);
         setModalType("Success");
         setModalTitle("レビューが更新されました。");
       } else {
-        const message = UtilApi.selectedErrorMessage([...categories, "goodComment", "badComment", "townName"], data.errors);
+        const message = UtilApi.getErrorMessage(response, [...categories, "goodComment", "badComment", "townName"]);
         setIsModalOpen(true);
         setModalType("Error");
         setModalTitle("エラーが発生しました。");

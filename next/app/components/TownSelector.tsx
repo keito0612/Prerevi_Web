@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { UtilApi } from "@/Util/Util_api";
+import { ApiResponse } from "@/types";
 import TownSelectorModal from "./TownSelectorModal";
 
 interface Town {
@@ -108,10 +109,10 @@ export default function TownSelector({
       setIsLoading(true);
       try {
         const res = await fetch(`${UtilApi.API_URL}/api/city/${cityId}/towns/`);
-        const data = await res.json();
+        const response: ApiResponse<{ towns: Town[] }> = await res.json();
 
-        if (res.ok && data.towns) {
-          setTowns(data.towns);
+        if (response.success) {
+          setTowns(response.data.towns);
         }
       } catch (err) {
         console.error("Failed to fetch towns:", err);

@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { getFirebaseMessaging, getToken, onMessage } from '@/lib/firebase';
 import { AuthService } from '@/service/authServise';
 import { UtilApi } from '@/Util/Util_api';
+import { ApiResponse } from '@/types';
 
 console.log('=== usePushNotification.ts imports completed ===');
 
@@ -28,7 +29,7 @@ export function usePushNotification() {
 
     try {
       console.log('Sending FCM token to server:', token.substring(0, 30) + '...');
-      const response = await fetch(`${UtilApi.API_URL}/api/fcm/token`, {
+      const res = await fetch(`${UtilApi.API_URL}/api/fcm/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,8 +38,8 @@ export function usePushNotification() {
         },
         body: JSON.stringify({ fcm_token: token }),
       });
-      const data = await response.json();
-      console.log('FCM token save response:', response.status, data);
+      const response: ApiResponse<{ message: string }> = await res.json();
+      console.log('FCM token save response:', res.status, response);
     } catch (error) {
       console.error('Error saving FCM token:', error);
     }

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SnackbarComponent from '../components/SnackBar';
 import Loading2 from '../components/Loading2';
 import Modal from '../components/Modal';
-import { ResultType } from '@/types';
+import { ApiResponse, ResultType } from '@/types';
 import { UtilApi } from '@/Util/Util_api';
 import Loading from '../components/Loading';
 
@@ -45,12 +45,12 @@ function ResetPasswordContent() {
         body: JSON.stringify({ ...data, token, email }),
       });
 
-      const result = await res.json();
+      const response: ApiResponse<{ message: string }> = await res.json();
 
-      if (!res.ok) {
+      if (!response.success) {
         setModalType('Error');
         setModalTitle('パスワードリセットが失敗しました。');
-        setErrorMessage(result.message || 'サーバーに問題が発生しました。もう一度お試しください。');
+        setErrorMessage(response.error.message || 'サーバーに問題が発生しました。もう一度お試しください。');
         setSnackbarOpen(true);
       } else {
         setModalType('Success');

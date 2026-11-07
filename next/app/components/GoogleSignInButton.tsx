@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { UtilApi } from "@/Util/Util_api";
+import { ApiResponse } from "@/types";
 
 interface GoogleSignInButtonProps {
   className?: string;
@@ -14,18 +15,18 @@ export default function GoogleSignInButton({ className = "" }: GoogleSignInButto
     setIsLoading(true);
     try {
       // Laravel APIからGoogle OAuth URLを取得
-      const response = await fetch(
+      const res = await fetch(
         `${UtilApi.API_URL}/api/auth/google/url`
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to get OAuth URL");
+      const response: ApiResponse<{ url: string }> = await res.json();
+
+      if (!response.success) {
+        throw new Error(response.error.message);
       }
 
-      const data = await response.json();
-
       // Google認証ページにリダイレクト
-      window.location.href = data.url;
+      window.location.href = response.data.url;
     } catch (err) {
       console.error("Google sign in error:", err);
       alert("Googleログインに失敗しました");

@@ -8,7 +8,7 @@ import NavBar from '@/app/components/NavBar';
 import NavigationBottomBar from '@/app/components/NavigationBottomBar';
 import { UtilApi } from '@/Util/Util_api';
 import { AuthService } from '@/service/authServise';
-import { Notification, NotificationType, ResultType } from '@/types';
+import { ApiResponse, Notification, NotificationType, ResultType } from '@/types';
 import Loading2 from '@/app/components/Loading2';
 import Modal from '@/app/components/Modal';
 import PageHeader from '@/app/components/PageHeader';
@@ -47,14 +47,13 @@ function NotificationDetail() {
         },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setNotification(data['notification'] as Notification);
-        console.log(data['notification'] as Notification);
-      } else if (res.status === 401) {
+      const response: ApiResponse<{ notification: Notification }> = await res.json();
+      if (response.success) {
+        setNotification(response.data.notification);
+      } else if (response.error.code === 'UNAUTHORIZED') {
         router.push("/unauthorized");
       } else {
-        throw new Error(`HTTP error! Status: ${res.status}`);
+        throw new Error(response.error.message);
       }
     } catch (e) {
       console.error("通知詳細取得エラー:", e);
@@ -90,14 +89,17 @@ function NotificationDetail() {
         },
       });
 
-      if (res.ok) {
+      const response: ApiResponse<{ message: string }> = await res.json();
+      if (response.success) {
         setModalType2('Success');
         setModalTitle2('通知を削除しました。');
         setModalMessage2('');
         setIsOpanModal2(true);
+      } else {
+        throw new Error(response.error.message);
       }
     } catch (e) {
-      setModalType2('Success');
+      setModalType2('Error');
       setModalTitle2('通知を削除することができませんでした。');
       setModalMessage2('サーバーに何らかの問題が発生したので通知を削除できませんでした。\nもう一度お試しください。');
       setIsOpanModal2(true);

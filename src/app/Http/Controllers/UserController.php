@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+
 class UserController extends Controller
 {
-    function getUser() {
-        $user = Auth::user();
+    public function getUser()
+    {
         return response()->json([
-            'user' => $user
-        ], 201);
+            'success' => true,
+            'data' => ['user' => Auth::user()]
+        ]);
     }
 }

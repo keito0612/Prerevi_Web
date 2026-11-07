@@ -1,8 +1,19 @@
 import { UtilApi } from "@/Util/Util_api";
 import { CookieServise } from "./cookieServise";
+import { ApiResponse } from "@/types";
 
 const TOKEN_KEY = 'token';
 const TOKEN_EXPIRY_DAYS = 7;
+
+interface LoginData {
+  token: string;
+  message: string;
+}
+
+interface RegisterData {
+  token: string;
+  message: string;
+}
 
 export class AuthService {
 
@@ -17,15 +28,16 @@ export class AuthService {
         body: JSON.stringify(param),
       });
 
-      const data = await res.json();
-      const token = data.token as string;
-      if (res.ok) {
-        success(token);
+      const response: ApiResponse<LoginData> = await res.json();
+
+      if (response.success) {
+        success(response.data.token);
       } else {
-        if (data.errors) {
-          validetionMessage(UtilApi.selectedErrorMessage(['email', 'password'], data.errors));
-        } else if (data.message) {
-          failure(data.message);
+        const errorMessage = UtilApi.getErrorMessage(response, ['email', 'password']);
+        if (response.error.errors) {
+          validetionMessage(errorMessage);
+        } else {
+          failure(errorMessage);
         }
       }
     } catch (error) {
@@ -44,12 +56,13 @@ export class AuthService {
         },
         body: JSON.stringify(param),
       });
-      const data = await res.json();
-      const token = data.token as string;
-      if (res.ok) {
-        success("新規登録が完了しました。", token);
+
+      const response: ApiResponse<RegisterData> = await res.json();
+
+      if (response.success) {
+        success("新規登録が完了しました。", response.data.token);
       } else {
-        failure(UtilApi.selectedErrorMessage(["name", "email", "password"], data["errors"]));
+        failure(UtilApi.getErrorMessage(response, ["name", "email", "password"]));
       }
     } catch (error) {
       failure('想定外のエラーが発生しました。');
